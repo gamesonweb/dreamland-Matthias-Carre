@@ -1,51 +1,44 @@
 import { SceneLoader, Vector3, KeyboardEventTypes } from "@babylonjs/core";
 
-import TuyauDV from "./../assets/tuyauDroitVide.glb";
-import TuyauDP from "./../assets/tuyauDroitPlein.glb";
-import TuyauAV from "./../assets/tuyauAngleVide.glb";
-import TuyauAP from "./../assets/tuyauAnglePlein.glb";
-import EauMap from "./../assets/SolEau.glb";
+import tuyauD from "./../assets/tuyaux/tuyauDroit.glb";
+import tuyauA from "./../assets/tuyaux/tuyauAngle.glb";
+import EauMap from "./../assets/tuyaux/SolEau.glb";
+
+import { Tuyau } from "./Tuyaux.js";
+
 
 export class JeuTuyaux {
     constructor(scene) {
         this.scene = scene;
+        this.tt = null;
         this.models = [];
-        this.modelsP = [];
+        //matrice des tuyaux
+        this.matriceModels = [];
         this.eau=null;
         this.eauvisi = false;
-        this.matrice = [[2, 1, 1, 1, 2, 0, 0, 0],
-        [2, 1, 2, 0, 2, 2, 0, 0],
-        [0, 0, 1, 0, 0, 1, 0, 0],
-        [2, 0, 2, 2, 0, 1, 0, 0],
-        [2, 2, 0, 1, 2, 2, 0, 2],
-        [0, 1, 0, 1, 1, 0, 0, 1],
-        [2, 2, 0, 1, 2, 1, 1, 2],
-        [2, 1, 1, 2, 0, 0, 0, 0]];
+        //2 coin 1 droit
+        this.matrice = 
+        [[2, 1, 1, 1, 2, 1, 2, 2],
+        [2, 1, 2, 2, 2, 2, 1, 2],
+        [2, 1, 1, 1, 1, 1, 2, 1],
+        [2, 1, 2, 2, 1, 1, 1, 1],
+        [2, 2, 1, 1, 2, 2, 2, 2],
+        [1, 1, 2, 1, 1, 1, 1, 1],
+        [2, 2, 2, 1, 2, 1, 1, 2],
+        [2, 1, 1, 2, 2, 2, 1, 1]];
 
-        this.rotations = [[1, 1, 1, 1, 1, 0, 0, 0],
-        [1, 1, 1, 0, 1, 1, 0, 0],
-        [0, 0, 1, 0, 0, 1, 0, 0],
-        [1, 0, 1, 1, 0, 1, 0, 0],
-        [1, 1, 0, 1, 1, 1, 0, 1],
-        [0, 1, 0, 1, 1, 0, 0, 1],
-        [1, 1, 0, 1, 1, 1, 1, 1],
-        [1, 1, 1, 1, 0, 0, 0, 0]];
+        this.rotations = 
+        [[1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1]];
         //si 1-4 c'est un coin si 5 c'est un droit impaire et si 6 c'est un droit pair
         //5 gauche droite|6haut bas|1gauche haut|2droite haut|3bas droite|4bas gauche 
-        this.res =
-            [[3, 5, 5, 5, 4, 0, 0, 0],
-            [2, 5, 4, 0, 2, 4, 0, 0],
-            [0, 0, 6, 0, 0, 6, 0, 0],
-            [4, 0, 2, 4, 0, 6, 0, 0],
-            [2, 4, 0, 6, 3, 1, 0, 3],
-            [0, 6, 0, 6, 6, 0, 0, 6],
-            [3, 1, 0, 6, 2, 5, 5, 1],
-            [2, 5, 5, 1, 0, 0, 0, 0]];
 
-        this.chemin = [[3, 0], [4, 0], [4, 1], [5, 1], [6, 1], [6, 0], [7, 0], [7, 1], [7, 2],
-        [7, 3], [6, 3], [5, 3], [4, 3], [3, 3], [3, 2], [2, 2], [1, 2], [1, 1], [1, 0],
-        [0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [1, 4], [1, 5], [2, 5], [3, 5], [4, 5],
-        [4, 4], [5, 4], [6, 4], [6, 5], [6, 6], [6, 7], [5, 7], [4, 7]];
         this.KeyControles();
 
     }
@@ -53,14 +46,19 @@ export class JeuTuyaux {
     KeyControles() {
         this.scene.onKeyboardObservable.add((kbInfo) => {
             if (kbInfo.type === KeyboardEventTypes.KEYDOWN) { // KEYDOWN event
-                if (kbInfo.event.key.toLowerCase() === 'o') {
+                if (kbInfo.event.key.toLowerCase() === 'e') {
                     //console.log("O pressed");
                     //console.log(this.scene.activeCamera.position);
                     //le joeur a changer apres c'est juste pour test
                     const playerPosition = this.scene.player.position;
-                    this.rotateClosestTuyau(playerPosition);
-                    this.changeVisibility();
+                    if(this.rotateClosestTuyau(playerPosition) !== null){
+                        this.changeVisibility();
+                    }
+                    
                 }
+                // }if (kbInfo.event.key.toLowerCase() === 'o') {
+                //     document.getElementById("eau").src = "./eauP.png";
+                // }
             }
         });
     }
@@ -71,32 +69,41 @@ export class JeuTuyaux {
         let vec = new Vector3(20, 20, 20);
         let coef = 20;
         this.loadLac();
-        this.loadModel(TuyauDP, vec, new Vector3(positionInit.x + 3 * coef, positionInit.y, positionInit.z - coef), new Vector3(0, Math.PI, 0), positionInit, true, false);
+        //let t = this.loadModel(TuyauD, vec, new Vector3(positionInit.x + 3 * coef, positionInit.y, positionInit.z - coef), new Vector3(0, Math.PI, 0), positionInit, true, false);
+        let t = new Tuyau(this.scene)
+        await t.loadModel(tuyauD, vec, new Vector3(positionInit.x + 3 * coef, positionInit.y, positionInit.z - coef), new Vector3(0, 0, 0), positionInit);
+        t.plein();
         for (let i = 0; i < this.matrice.length; i++) {
+            let ligne = [];
             for (let j = 0; j < this.matrice[i].length; j++) {
                 if (this.matrice[i][j] == 1) {
-                    this.loadModel(TuyauDV, vec, new Vector3(positionInit.x + i * coef, positionInit.y, positionInit.z + j * coef), new Vector3(0, 0, 0), positionInit, true, true);
-                    this.loadModel(TuyauDP, vec, new Vector3(positionInit.x + i * coef, positionInit.y, positionInit.z + j * coef), new Vector3(0, (this.res[i][j] - 1) * (Math.PI / 2), 0), positionInit, false, true);
-                } else if (this.matrice[i][j] == 2) {
-                    this.loadModel(TuyauAV, vec, new Vector3(positionInit.x + i * coef, positionInit.y, positionInit.z + j * coef), new Vector3(0, Math.PI / 2, 0), positionInit, true, true);
-                    this.loadModel(TuyauAP, vec, new Vector3(positionInit.x + i * coef, positionInit.y, positionInit.z + j * coef), new Vector3(0, this.res[i][j] * (Math.PI / 2), 0), positionInit, false, true);
+                    let tuyau = new Tuyau(this.scene);
+                    tuyau.loadModel(tuyauD, vec, new Vector3(positionInit.x + i * coef, positionInit.y, positionInit.z + j * coef), new Vector3(0, Math.PI / 2, 0),positionInit );
+                    this.models.push(tuyau);
+                    ligne.push([tuyau,1,1]);//tuyaux,rotation,type
+                    //this.loadModel(TuyauDP, vec, new Vector3(positionInit.x + i * coef, positionInit.y, positionInit.z + j * coef), new Vector3(0, (this.res[i][j] - 1) * (Math.PI / 2), 0), positionInit, false, true);
+                } else if (this.matrice[i][j] == 2) {   
+                    let tuyau = new Tuyau(this.scene);
+                    await tuyau.loadModel(tuyauA, vec, new Vector3(positionInit.x + i * coef, positionInit.y, positionInit.z + j * coef), new Vector3(0, Math.PI / 2, 0),positionInit);
+                    this.models.push(tuyau);
+                    tuyau.vide();
+                    ligne.push([tuyau,1,2]);
+                    //this.loadModel(TuyauAP, vec, new Vector3(positionInit.x + i * coef, positionInit.y, positionInit.z + j * coef), new Vector3(0, this.res[i][j] * (Math.PI / 2), 0), positionInit, false, true);
                 }
             }
+            this.matriceModels.push(ligne);
         }
+        console.log("matriceModels=", this.matriceModels);
     }
 
 
     async loadModel(model, scale, position, rotation, posInit, visibility, flip) {
         try {
-            this.eau = await this.loadLac();
-            const result = await SceneLoader.ImportMeshAsync("", model, "", this.scene);
+            await this.loadLac();
+            let tuyau = new Tuyau(this.scene);
+            const result = await tuyau.loadModel(model, scale, position, rotation,posInit);
             this.model = result.meshes[0];
-            this.model.scaling = new Vector3(scale.x, scale.y, scale.z);
-            this.model.position = new Vector3(position.x, position.y, position.z);
-            this.model.rotation = new Vector3(rotation.x, rotation.y, rotation.z);
-            for (let mesh of result.meshes) {
-                mesh.isVisible = visibility;
-            }
+
             //permet de gerer avec les matrice leur pos et rota
             this.model.metadata = {
                 modelType: model,
@@ -107,18 +114,19 @@ export class JeuTuyaux {
             };
             if (visibility && flip) {
                 this.models.push(this.model);
-            } else if (!visibility && flip) {
-                this.modelsP.push(this.model);
             }
             //this.applyTexture(texturePath);
+            
+            return result;
         } catch (error) {
             console.error("Error loading model:", error);
         }
     }
     Closest(position) {
         let closest = null;
-        let min = Infinity;
+        let min = 50;
         for (const tuyau of this.models) {
+            //console.log("tuyau pos=", tuyau.position);
             const distance = Vector3.Distance(tuyau.position, position);
             if (distance < min) {
                 min = distance;
@@ -129,25 +137,31 @@ export class JeuTuyaux {
     }
     rotateClosestTuyau(position) {
         const closest = this.Closest(position);
-        console.log("closest=", closest.metadata.gridPosition);
+        if(closest == null){
+            return null;
+        }
+        console.log("closest=", closest);
         //console.log("gridpos=",closest.metadata.gridPosition);
         if (closest) {
-
-            closest.rotation.y += Math.PI / 2;
             //console.log("rota=",this.rotations[closest.metadata.gridPosition.x][closest.metadata.gridPosition.z]);
             if (this.rotations[closest.metadata.gridPosition.x][closest.metadata.gridPosition.z] == 4) {
+                //console.log("rota:", this.matriceModels[closest.metadata.gridPosition.x][closest.metadata.gridPosition.z][1]);
+                //console.log("tuyau=", this.matriceModels[closest.metadata.gridPosition.x][closest.metadata.gridPosition.z]);
                 this.rotations[closest.metadata.gridPosition.x][closest.metadata.gridPosition.z] = 1;
+                this.matriceModels[closest.metadata.gridPosition.x][closest.metadata.gridPosition.z][1] = 1;
             } else {
                 this.rotations[closest.metadata.gridPosition.x][closest.metadata.gridPosition.z] += 1;
+                this.matriceModels[closest.metadata.gridPosition.x][closest.metadata.gridPosition.z][1] += 1;
                 //console.log("matrice=",this.rotations[closest.metadata.gridPosition.x][closest.metadata.gridPosition.z]);
             }
+            closest.rotation.y = this.matriceModels[closest.metadata.gridPosition.x][closest.metadata.gridPosition.z][1] * (Math.PI / 2);
         }
         //console.log("matrice=",this.rotations);
         //this.waterPropa(1,1);
     }
 
     //fonction de test je la laisse au cas ou
-    waterPropa(x, y) {
+    waterPropa() {
         console.log("waterpropa");
 
         for (let i = 0; i < this.rotations.length; i++) {
@@ -168,7 +182,105 @@ export class JeuTuyaux {
             }
         }
     }
+    //prend une coo d'arrive et une direction 1 nord 2 est 3 sud 4 ouest
+    propagation(x, y,dir,res) {
+        if (x < 0 || x >= this.matriceModels.length || y < 0 || y >= this.matriceModels[0].length) {return null;}
+        let tuyauInfos = this.matriceModels[x][y];
+        console.log("propagation= ", x, y);
+        console.log("infos X=",x,"y= ",y,"type=", tuyauInfos[2], "rotation=", tuyauInfos[1], "dir=", dir);
+        
 
+        //si c'est droit
+        if (tuyauInfos[2] == 1) {
+            //soit n-s soit e-w
+            if(tuyauInfos[1] == 1 || tuyauInfos[1] == 3){
+                if (dir == 1) {
+                    this.propagation(x+1, y,1,res);
+                    res.push([x,y]);
+                    return res;
+                } else if (dir == 2 || dir == 4) {
+                    return;
+                }else if (dir == 3) {
+                    this.propagation(x - 1, y,3,res);
+                    res.push([x,y]);
+                    return res;
+                }
+            }else if(tuyauInfos[1] == 2 || tuyauInfos[1] == 4){
+                if (dir == 2) {
+                    this.propagation(x, y - 1,2,res);
+                    res.push([x,y]);
+                    return res;
+                } else if (dir == 1 || dir == 3) {
+                    return;
+                }else if (dir == 4) {
+                    this.propagation(x, y + 1,4,res);
+                    res.push([x,y]);
+                    return res;
+                }
+            }
+        }//si c'est un coin
+        else if (tuyauInfos[2] == 2) {
+            if (tuyauInfos[1] == 1) {
+                //nord-west
+                if (dir == 2 || dir == 3) {
+                    return res;
+                } else if (dir == 1) {
+                    this.propagation(x ,y - 1,2,res);
+                    res.push([x,y]);
+                    return res;
+                }else if (dir == 4) {
+                    console.log("propagation nord-west");
+                    this.propagation(x - 1, y, 3,res);
+                    
+                    res.push([x,y]);
+                    console.log("res=",res);
+                    return res;
+                }
+            }else if (tuyauInfos[1] == 2) {
+                //nord-est
+                if (dir == 3 || dir == 4) {
+                    return res;
+                } else if (dir == 1) {
+                    this.propagation(x ,y + 1,4,res);
+                    res.push([x,y]);
+                    return res;
+                }else if (dir == 2) {
+                    this.propagation(x - 1, y,3,res);
+                    res.push([x,y]);
+                    return res;
+                }
+            }else if (tuyauInfos[1] == 3) {
+                //sud-est
+                if (dir == 1 || dir == 4) {
+                    return res;
+                } else if (dir == 2) {
+                    this.propagation(x + 1, y,1,res);
+                    res.push([x,y]);
+                    return res;
+                }else if (dir == 3) {
+                    this.propagation(x ,y + 1,4,res);
+                    res.push([x,y]);
+                    return res;
+                }
+            }else if (tuyauInfos[1] == 4) {
+                //sud-west
+                if (dir == 1 || dir == 2) {
+                    return res;
+                } else if (dir == 3) {
+                    this.propagation(x, y - 1,2,res);
+                    res.push([x,y]);
+                    return res;
+                }else if (dir == 4) {
+                    this.propagation(x + 1, y,1,res);
+                    res.push([x,y]);
+                    return res;
+                }
+            }
+        }    
+        return res;
+    }
+
+    
     //retourne les coo des tuyaux bien placés
     tuplesCorrecte() {
         var valides = [];
@@ -179,71 +291,58 @@ export class JeuTuyaux {
                 valides.push(tuple);
             } else {
                 //console.log("no flow");
-                //console.log("valides=",valides);
+                console.log("valides=",valides,"len",valides.length);
                 return valides;
             }
         }
-        //console.log("valides=",valides);
+        console.log("valides=",valides);
         return valides;
     }
 
     //change la visibilite des tuyaux bien et mal places
     changeVisibility() {
-        let valides = this.tuplesCorrecte();
+    
+        let valides = this.propagation(3,0,4,[]);
+        if(!valides){
+            console.log("aucun tuyau valide");
+            return;
+        }
+        //console.log("valides=", valides);
+        //console.log("valides=",valides,"len",valides);
 
-        //apparition de leau 
-        if(valides.length == this.chemin.length && !this.eauvisi){
-            this.rempliLac();
+        for (let i = 0; i < this.matriceModels.length; i++) {
+            for (let j = 0; j < this.matriceModels[i].length; j++) {
+                //console.log("matrice=",this.matriceModels[i][j]);
+                if (this.matriceModels[i][j][0]) {
+                    this.matriceModels[i][j][0].vide();
+                }
+            }
+        }
+        let endaccess = false;
+        valides.forEach((tuple) => {
+            this.matriceModels[tuple[0]][tuple[1]][0].plein();
+            if (tuple[0] == 4 && tuple[1] == 7 && this.matriceModels[tuple[0]][tuple[1]][1]== 3) {
+                this.showTemporaryMessage("Mission des tuyaux terminée !", 5000);
+                document.getElementById("eau").src = "./eauP.png";
+                endaccess = true;
+            }
+        });
+
+        if (endaccess) {
+            console.log("rempli lac");
             this.scene.missionTronc=true;
-            
-        }else if(this.eauvisi){
+            this.rempliLac();
+        }
+        else {
+            console.log("vide lac");
             this.videLac();
         }
-
-        for (let i = 0; i < this.modelsP.length; i++) {
-            //console.log("tuple=",this.modelsP[i].metadata.gridPosition,"onValide?=",this.modelsP[i].metadata.gridPosition in valides);
-            let tuple = this.modelsP[i].metadata.gridPosition;
-            let presence = false;
-            for (let possi of valides) {
-                if (tuple.x == possi[0] && tuple.z == possi[1]) {
-                    //console.log("on rend visible ",tuple);
-                    presence = true;
-                    for (let mesh of this.modelsP[i].getChildMeshes()) {
-                        mesh.isVisible = true;
-                    }
-                }
-            }
-            if (!presence) {
-                //console.log("on rend invisible ",tuple);
-                for (let mesh of this.modelsP[i].getChildMeshes()) {
-                    mesh.isVisible = false;
-                }
-            }
-        }
-
-        for (let i = 0; i < this.models.length; i++) {
-            let tuple = this.models[i].metadata.gridPosition;
-            let presence = false;
-            for (let possi of valides) {
-                if (tuple.x == possi[0] && tuple.z == possi[1]) {
-                    //console.log("on rend invisible ",tuple);
-                    presence = true;
-                    for (let mesh of this.models[i].getChildMeshes()) {
-                        mesh.isVisible = false;
-                    }
-                }
-            }
-            if (!presence) {
-                //console.log("on rend visible ",tuple);
-                for (let mesh of this.models[i].getChildMeshes()) {
-                    mesh.isVisible = true;
-                }
-            }
-        }
+        
     }
     async loadLac(){
         try {
             const result = await SceneLoader.ImportMeshAsync("", EauMap, "", this.scene);
+            this.eau = result;
             const ground = result.meshes[0];
             result.meshes.forEach((mesh) => {
                 mesh.scaling = new Vector3(7, 7, 7);
@@ -259,15 +358,34 @@ export class JeuTuyaux {
         }
     }
     async rempliLac() {
+        console.log("pleinLac");
+        console.log(this.eau);
         this.eauvisi = true;
+        
         this.eau.meshes.forEach((mesh) => {
             mesh.isVisible = true;
         });
     }
     async videLac() {
+        console.log("videLac");
+        console.log(this.eau);
         this.eauvisi = false;
         this.eau.meshes.forEach((mesh) => {
             mesh.isVisible = false;
         });
+    }
+    showTemporaryMessage(message, duration = 100) {
+        const dialogueElement = document.getElementById("notif");
+        dialogueElement.innerHTML = message;
+        dialogueElement.style.display = 'block';
+        dialogueElement.style.opacity = '1';
+
+        // Faire disparaître le message après la durée spécifiée
+        setTimeout(() => {
+            dialogueElement.style.opacity = '0';
+            setTimeout(() => {
+                dialogueElement.style.display = 'none';
+            }, 500); // Attendre que la transition d'opacité soit terminée
+        }, duration);
     }
 }
