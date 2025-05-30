@@ -1,4 +1,4 @@
-import { Ray, SceneLoader, SpotLight, Sound, Engine, Scene, ShadowGenerator, ArcRotateCamera, HemisphericLight, MeshBuilder, Color3, Vector3, PhysicsShapeType, PhysicsAggregate, HavokPlugin, StandardMaterial, Texture, DirectionalLight, Vector4 } from "@babylonjs/core";
+import { Ray, SpotLight, Sound, Engine, Scene, ArcRotateCamera, MeshBuilder, Color3, Vector3 } from "@babylonjs/core";
 //import HavokPhysics from "@babylonjs/havok";
 //import Map from "./../assets/heightMap2.png";
 //import {Inspector} from "@babylonjs/inspector";
@@ -38,6 +38,8 @@ let backgroundMusicGame;
 let lemon;
 let pnj_Potato;
 let pnj_CitronVert;
+let panneau1;
+
 let pnj_Fleur;
 let PNJs = [];
 
@@ -142,16 +144,19 @@ const createScene = async function () {
 
     pnj_CitronVert = new Pnj(scene);
     await pnj_CitronVert.loadPnj(scene);
-    pnj_CitronVert.model.position = new Vector3(-120, 27.25, -70);
-
+    pnj_CitronVert.model.position = new Vector3(-40, 40, 60);
     pnj_CitronVert.model.rotation.y = Math.PI / 4
-
     PNJs.push(pnj_CitronVert);
+
+    panneau1 = new Pnj(scene);
+    await panneau1.loadPanneau("Tourne les tuyaux pour guider l'eau jusqu'au lac.", "Eh oh c'est pas fini, le lac n'est pas rempli !", "Je n'ai plus d'info pour toi.");
+    panneau1.model.position = new Vector3(-60,67,-410);
+    PNJs.push(panneau1);
 
     // Create lemon with physics
     lemon = citron.getMesh();
-    let position = new Vector3(100, 42.375, 0);
-    let rotation = new Vector3(0, Math.PI, 0);
+    let position = new Vector3(68, 39.375, 68);
+    let rotation = new Vector3(0, -3 * Math.PI/4, 0);
     spawnCitron(lemon, position, rotation);
 
     window.gameCitron = citron;
@@ -172,24 +177,60 @@ const createScene = async function () {
     // Variables to track the current force
     forceDirection = new Vector3(0, 0, 0);
 
-    // Add keyboard controls
-    window.addEventListener("keydown", (event) => {
-        keypress[event.code] = true;
+
+    scene.onBeforeRenderObservable.add(() => update());
+
+    function update() {
         if (playing) {
             let mindistance = Infinity
             PNJs.forEach((pnj) => {
+                if (pnj.model == null) return;
                 let distance = Math.sqrt(Math.pow(lemon.position.x - pnj.model.position.x, 2) + Math.pow(lemon.position.z - pnj.model.position.z, 2));
                 if (distance < mindistance) {
                     mindistance = distance;
                 }
                 if (distance < 70) {
-                    if (distance < 40) pnj.changeclickercolor(new Color3(1, 0, 1), true);
+                    if (distance < 40){
+                        pnj.changeclickercolor(new Color3(1, 0, 1), true);
+                        if (!pnj.speaking && !pause){
+                            showTemporaryMessage("Appuie sur E pour interagir avec " + pnj.name, 500);
+                        } else {
+                            return;
+                        }
+                    } 
                     pnj.model.lookAt(new Vector3(lemon.position.x, pnj.model.position.y, lemon.position.z));
                 }
                 else pnj.changeclickercolor(new Color3(0, 0, 0), false);
             })
+        }
+    }
+    // Add keyboard controls
+    
+    window.addEventListener("keydown", (event) => {
+        keypress[event.code] = true;
+        if (playing) {
+            //J'ai passer cette partie du code dans update pour la faire tourner en boucle 
+            //pour que les pnj tourne smooth.
 
-            //console.log(event.code)
+            let mindistance = Infinity
+            // PNJs.forEach((pnj) => {
+            //     if (pnj.model == null) return;
+            //     let distance = Math.sqrt(Math.pow(lemon.position.x - pnj.model.position.x, 2) + Math.pow(lemon.position.z - pnj.model.position.z, 2));
+            //     if (distance < mindistance) {
+            //         mindistance = distance;
+            //     }
+            //     if (distance < 70) {
+            //         if (distance < 40){
+            //             pnj.changeclickercolor(new Color3(1, 0, 1), true);
+            //             showTemporaryMessage("Appuie sur E pour interagir avec " + pnj.name, 2000);
+            //         } 
+            //         pnj.model.lookAt(new Vector3(lemon.position.x, pnj.model.position.y, lemon.position.z));
+            //     }
+            //     else pnj.changeclickercolor(new Color3(0, 0, 0), false);
+            // })
+
+            
+
             switch (event.code) {
                 // case "KeyI":
                 //     if (scene.debugLayer.isVisible()) {
@@ -210,24 +251,29 @@ const createScene = async function () {
                 case "KeyE":
                     PNJs.forEach((pnj) => {
                         mindistance = Vector3.Distance(lemon.position, pnj.model.position);
-                        if (!pnj.speaking && !pause && mindistance < 50) {
+                        if (!pnj.speaking && !pause && mindistance < 40) {
 
                             pnj.handleDialog();
                             clickSound.playMusic();
-                        } else if (mindistance < 50) { pnj.endDialog(); }
+                        } else if (mindistance < 40) { pnj.endDialog(); }
                     })
                     //devant la grotte
                     if (lemon.position.y > 0 && lemon.position.x < -257 && lemon.position.x > -270 && lemon.position.z > -28 && lemon.position.z < 23) {
                         lemon.position.x = 830;
                         lemon.position.y = -180;
                         lemon.position.z = 820;
+
                         document.getElementById("notif").innerHTML = "none";
+                        setTimeout(() => {
+                            showTemporaryMessage("Récupère le Soleil qui est au milieu de la grotte !", 10000);
+                        }, 1000);        
                     }
                     if (lemon.position.x < 600 && lemon.position.x > 578 && lemon.position.z > 598 && lemon.position.z < 626) {
-                        //tp au debut
-                        lemon.position.x = 55;
-                        lemon.position.y = 40;
-                        lemon.position.z = 80;
+                        //tp deavnt la grotte
+                        lemon.position.x = -260;
+                        lemon.position.y = 26.5;
+                        lemon.position.z = 0;
+                        
                     }
                     break;
                 case "KeyC":
@@ -287,6 +333,7 @@ document.getElementById("playbutton").addEventListener("click", function (e) {
     backgroundMusicMenu.stopMusic();
     backgroundMusicGame.playMusic();
     document.getElementById("missions").style.display = 'flex';
+    setTimeout(() => canvas.focus(), 10);
 });
 
 window.addEventListener('load', () => {
@@ -299,7 +346,10 @@ const pauseMenu = document.getElementById("pauseMenu")
 function pauseResume() {
     pause = !pause;
     if (pause) backgroundMusicGame.pauseMusic();
-    else backgroundMusicGame.playMusic()
+    else {
+        backgroundMusicGame.playMusic();
+        setTimeout(() => canvas.focus(), 10);
+    }
     pauseButton.style.display = pause ? 'none' : 'block'
     pauseMenu.style.display = pause ? 'flex' : 'none'
 }
@@ -310,7 +360,7 @@ document.getElementById("resumeButton").addEventListener("click", () => { pauseR
 document.getElementById("resetButton").addEventListener("click", () => {
     if (pause) {
         pauseResume();
-        spawnCitron(lemon, position, rotation);
+        spawnCitron(lemon, new Vector3(72,40,60), new Vector3(0, 0, 0));
     }
 })
 createScene().then((scene) => {
@@ -332,7 +382,7 @@ createScene().then((scene) => {
     engine.runRenderLoop(function () {
         //console.log("test: ",document.getElementById("dialogue").style.display);
         if (!playing) { }
-        else if (document.getElementById("dialogue").style.display !== 'none') {
+        else if (document.getElementById("dialogContainer").style.display !== 'none') {
             //console.log("dispaly: ",document.getElementById("dialogue").style.display);
             gameCitron.stand();
             scene.render();
@@ -350,7 +400,7 @@ createScene().then((scene) => {
                 groundCollision.point = scene.pickWithRay(groundCollision.ray, (mesh) => {
                     return (mesh.name === "ground");
                 }).pickedPoint.y
-            } catch (e) { groundCollision.point = lemon.position.y - 20; }
+            } catch (e) { groundCollision.point = lemon.position.y - 20 * scene.getAnimationRatio(); }
 
             //bottom right collisions
             try {
@@ -414,16 +464,10 @@ createScene().then((scene) => {
                 walkSound.stopMusic();
                 gameCitron.stand();
             }
-            if (keypress["KeyT"]) {
-                spawnCitron(lemon, position, rotation);
-            } //reset position
-            if (keypress["KeyU"]) {
-                spawnCitron(lemon, new Vector3(0, 0, 0), rotation);
-            }
             //gestion du saut et du déplacement aérien
             if (jumping) {
                 if (jumpPad.position.y - jumpY <= 5) {
-                    jumpPad.position.y += 0.2;
+                    jumpPad.position.y += 0.2 * scene.getAnimationRatio();
                 }
                 else {
                     jumping = false;
@@ -434,7 +478,7 @@ createScene().then((scene) => {
             else {
                 if (groundCollision.lastY >= lemon.position.y - 0.001 && groundCollision.lastY <= lemon.position.y + 0.001) { // if the lemon is on the ground
                     if (keypress["Space"]) {
-                        console.log("Pos:", lemon.position.x, lemon.position.y, lemon.position.z) //pour chopper des coordonnées facilement
+                        //console.log("Pos:", lemon.position.x, lemon.position.y, lemon.position.z) //pour chopper des coordonnées facilement
                         jumping = true; // we can jump
                         jumpY = groundCollision.point;
                         jumpPad.position.y = jumpY;
@@ -446,7 +490,7 @@ createScene().then((scene) => {
                     }
                 }
                 else { // if we are still up
-                    jumpPad.position.y += -0.2
+                    jumpPad.position.y += -0.2 * scene.getAnimationRatio(); // we fall down
                 }
             }
 
@@ -502,21 +546,23 @@ createScene().then((scene) => {
             //Partie de la tp dans le labyrinthe
             //console.log("Test tp:", lemon.position.x, lemon.position.z ,lemon.position.x < -257 , lemon.position.x > -270 , lemon.position.z > -28 , lemon.position.z < 23 );
             if (lemon.position.y > 0 && lemon.position.x < -257 && lemon.position.x > -270 && lemon.position.z > -28 && lemon.position.z < 23) {
-                console.log("tu peux tp apuie sur E dailleur faut faire un ptit dialogue pour mettre loption ce serais cool voilavoila");
+                //console.log("tu peux tp apuie sur E dailleur faut faire un ptit dialogue pour mettre loption ce serais cool voilavoila");
                 showTemporaryMessage("Appuie sur E pour te rendre dans la grotte!", 100);
             }
             if (lemon.position.x < 600 && lemon.position.x > 578 && lemon.position.z > 598 && lemon.position.z < 626 && lemon.position.y < 0) {
-                showTemporaryMessage("Appuillez sur E pour récupérer le Soleil.", 500);
+                showTemporaryMessage("Appuie sur E pour récupérer le Soleil.", 500);
                 document.getElementById("soleil").src = "./soleilP.png";
                 scene.missionFeuille = true;
             }
             pnj_CitronVert.setState([scene.missionTronc ? 1 : 0, scene.missionFeuille ? 1 : 0, scene.missionFleur ? 1 : 0]);
             if (scene.missionFleur && scene.missionTronc && scene.missionFeuille) {
-                console.log("Mission terminée!");
+                //console.log("Mission terminée!");
                 if(!jeufini){
                     pnj_CitronVert.playAnimation("HowSweet");
                     jeufini = true;
-                    showTemporaryMessage("Bravo, tu as fini toutes les missions !", 5000);
+                    showTemporaryMessage("Bravo, tu as fini toutes les missions!", 10000);
+                    document.getElementById("fin").style.display = 'block';
+                    document.getElementById("fin").innerHTML = "Bravo, tu as fini toutes les missions!";
                 }
                 
             }

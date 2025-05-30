@@ -51,8 +51,14 @@ export class JeuTuyaux {
                     //console.log(this.scene.activeCamera.position);
                     //le joeur a changer apres c'est juste pour test
                     const playerPosition = this.scene.player.position;
-                    if(this.rotateClosestTuyau(playerPosition) !== null){
+                    if (this.rotateClosestTuyau(playerPosition) !== null ) {
                         this.changeVisibility();
+
+                        if (!this.scene.missionTronc){
+                            this.scene.PNJs[1].addDialog('milieu')
+                            this.scene.PNJs[1].removeDialog('debut');
+                            this.scene.PNJs[1].image = 'angryPanel.png'
+                        }
                     }
                     
                 }
@@ -76,24 +82,30 @@ export class JeuTuyaux {
         for (let i = 0; i < this.matrice.length; i++) {
             let ligne = [];
             for (let j = 0; j < this.matrice[i].length; j++) {
+                
+                //random entre 1 et 4
+                let rota = Math.floor(Math.random() * 4) + 1;
+
+                this.rotations[i][j] = rota;
                 if (this.matrice[i][j] == 1) {
                     let tuyau = new Tuyau(this.scene);
-                    tuyau.loadModel(tuyauD, vec, new Vector3(positionInit.x + i * coef, positionInit.y, positionInit.z + j * coef), new Vector3(0, Math.PI / 2, 0),positionInit );
+                    tuyau.loadModel(tuyauD, vec, new Vector3(positionInit.x + i * coef, positionInit.y, positionInit.z + j * coef), new Vector3(0, rota * (Math.PI / 2), 0),positionInit );
                     this.models.push(tuyau);
-                    ligne.push([tuyau,1,1]);//tuyaux,rotation,type
+                    ligne.push([tuyau,rota,1]);//tuyaux,rotation,type
                     //this.loadModel(TuyauDP, vec, new Vector3(positionInit.x + i * coef, positionInit.y, positionInit.z + j * coef), new Vector3(0, (this.res[i][j] - 1) * (Math.PI / 2), 0), positionInit, false, true);
                 } else if (this.matrice[i][j] == 2) {   
                     let tuyau = new Tuyau(this.scene);
-                    await tuyau.loadModel(tuyauA, vec, new Vector3(positionInit.x + i * coef, positionInit.y, positionInit.z + j * coef), new Vector3(0, Math.PI / 2, 0),positionInit);
+                    await tuyau.loadModel(tuyauA, vec, new Vector3(positionInit.x + i * coef, positionInit.y, positionInit.z + j * coef), new Vector3(0,rota* (Math.PI / 2), 0),positionInit);
                     this.models.push(tuyau);
                     tuyau.vide();
-                    ligne.push([tuyau,1,2]);
+                    ligne.push([tuyau,rota,2]);
                     //this.loadModel(TuyauAP, vec, new Vector3(positionInit.x + i * coef, positionInit.y, positionInit.z + j * coef), new Vector3(0, this.res[i][j] * (Math.PI / 2), 0), positionInit, false, true);
                 }
             }
             this.matriceModels.push(ligne);
         }
-        console.log("matriceModels=", this.matriceModels);
+        this.changeVisibility();
+        //console.log("matriceModels=", this.matriceModels);
     }
 
 
@@ -124,7 +136,7 @@ export class JeuTuyaux {
     }
     Closest(position) {
         let closest = null;
-        let min = 50;
+        let min = 30;
         for (const tuyau of this.models) {
             //console.log("tuyau pos=", tuyau.position);
             const distance = Vector3.Distance(tuyau.position, position);
@@ -140,7 +152,7 @@ export class JeuTuyaux {
         if(closest == null){
             return null;
         }
-        console.log("closest=", closest);
+        //console.log("closest=", closest);
         //console.log("gridpos=",closest.metadata.gridPosition);
         if (closest) {
             //console.log("rota=",this.rotations[closest.metadata.gridPosition.x][closest.metadata.gridPosition.z]);
@@ -162,13 +174,11 @@ export class JeuTuyaux {
 
     //fonction de test je la laisse au cas ou
     waterPropa() {
-        console.log("waterpropa");
-
         for (let i = 0; i < this.rotations.length; i++) {
             for (let j = 0; j < this.rotations[i].length; j++) {
-                console.log(this.rotations[i][j], this.res[i][j]);
+                //console.log(this.rotations[i][j], this.res[i][j]);
                 if (this.rotations[i][j] == this.res[i][j] || (this.res[i][j] > 4 && this.res[i][j] % 2 == this.rotations[i][j] % 2)) {
-                    console.log("visible");
+                    //console.log("visible");
                     for (let k = 0; k < this.modelsP.length; k++) {
                         if (this.modelsP[k].metadata.gridPosition.x == i && this.modelsP[k].metadata.gridPosition.z == j) {
 
@@ -186,8 +196,8 @@ export class JeuTuyaux {
     propagation(x, y,dir,res) {
         if (x < 0 || x >= this.matriceModels.length || y < 0 || y >= this.matriceModels[0].length) {return null;}
         let tuyauInfos = this.matriceModels[x][y];
-        console.log("propagation= ", x, y);
-        console.log("infos X=",x,"y= ",y,"type=", tuyauInfos[2], "rotation=", tuyauInfos[1], "dir=", dir);
+        //console.log("propagation= ", x, y);
+        //console.log("infos X=",x,"y= ",y,"type=", tuyauInfos[2], "rotation=", tuyauInfos[1], "dir=", dir);
         
 
         //si c'est droit
@@ -229,11 +239,11 @@ export class JeuTuyaux {
                     res.push([x,y]);
                     return res;
                 }else if (dir == 4) {
-                    console.log("propagation nord-west");
+                    //console.log("propagation nord-west");
                     this.propagation(x - 1, y, 3,res);
                     
                     res.push([x,y]);
-                    console.log("res=",res);
+                    //console.log("res=",res);
                     return res;
                 }
             }else if (tuyauInfos[1] == 2) {
@@ -291,11 +301,11 @@ export class JeuTuyaux {
                 valides.push(tuple);
             } else {
                 //console.log("no flow");
-                console.log("valides=",valides,"len",valides.length);
+                //console.log("valides=",valides,"len",valides.length);
                 return valides;
             }
         }
-        console.log("valides=",valides);
+        //console.log("valides=",valides);
         return valides;
     }
 
@@ -304,9 +314,10 @@ export class JeuTuyaux {
     
         let valides = this.propagation(3,0,4,[]);
         if(!valides){
-            console.log("aucun tuyau valide");
+            //console.log("aucun tuyau valide");
             return;
         }
+
         //console.log("valides=", valides);
         //console.log("valides=",valides,"len",valides);
 
@@ -322,19 +333,21 @@ export class JeuTuyaux {
         valides.forEach((tuple) => {
             this.matriceModels[tuple[0]][tuple[1]][0].plein();
             if (tuple[0] == 4 && tuple[1] == 7 && this.matriceModels[tuple[0]][tuple[1]][1]== 3) {
-                this.showTemporaryMessage("Mission des tuyaux terminée !", 5000);
+                 if (!this.scene.missionTronc) {
+                    this.showTemporaryMessage("Mission des tuyaux terminée !", 5000);
+                }
                 document.getElementById("eau").src = "./eauP.png";
                 endaccess = true;
             }
         });
 
         if (endaccess) {
-            console.log("rempli lac");
+            //console.log("rempli lac");
             this.scene.missionTronc=true;
             this.rempliLac();
         }
         else {
-            console.log("vide lac");
+            //console.log("vide lac");
             this.videLac();
         }
         
@@ -358,17 +371,21 @@ export class JeuTuyaux {
         }
     }
     async rempliLac() {
-        console.log("pleinLac");
-        console.log(this.eau);
+        //console.log("pleinLac");
+        //console.log(this.eau);
         this.eauvisi = true;
         
         this.eau.meshes.forEach((mesh) => {
             mesh.isVisible = true;
         });
+        
+        this.scene.PNJs[1].addDialog('fin')
+        this.scene.PNJs[1].removeDialog('milieu');
+        this.scene.PNJs[1].image = 'happyPanel.png'
     }
     async videLac() {
-        console.log("videLac");
-        console.log(this.eau);
+        //console.log("videLac");
+        //console.log(this.eau);
         this.eauvisi = false;
         this.eau.meshes.forEach((mesh) => {
             mesh.isVisible = false;

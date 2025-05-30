@@ -4,9 +4,11 @@ import mamafleur from "./../assets/fleurs/merefleur.glb";
 
 export class MereFleur {
     dialogue = 
-    ["Essayer de passer une fois par case",
-    "tu peux reessayer mais fait plus attention cette fois !\n Passe une seule fois par case",
-    "Bien joué, maintenant j'ai 32 enfants a m'occuper..."];
+    ["T'as besoin de l'engrais? Okay mais à une condition: fais pousser mes enfants en passant une seule fois sur chaque case du champ. d'accord?",
+    "Tu as écrasé mes enfants ! Recommence maintenant ! ET DEPUIS LE DÉBUT !",
+    "Prends cet engrais, je n'en ai plus besoin maintenant que j'ai 32 enfants à gérer..."];
+    // 32 pas 36 c'est 6*6 -4
+    // My bad frerot j'ai cru que les pièces étaient adoptées
     numDialogue = 0;
     scene = null;
     heureux = true;
@@ -14,9 +16,12 @@ export class MereFleur {
     animationGroups = null;
     currentAnimation = null;
     track = false;
+    typingInterval = null;
+    image = "neutralFlower.png";
     position = new Vector3(266, 26, 78);
     reset= false;
-    name= "Maelle";
+    name= "Maëlle";
+    currentText = "";
     constructor(scene) {
         this.scene = scene;
     }
@@ -28,7 +33,7 @@ export class MereFleur {
         //sphere de dialogue
         this.clickZone = MeshBuilder.CreateSphere("pnjClickZone", { diameter: 4 }, this.scene);
         this.clickZone.parent = this.collider;
-        this.clickZone.position = new Vector3(266, 26, 78);
+        this.clickZone.position = new Vector3(230, 26, 71);
         this.clickZone.position.y = this.clickZone.position.y + 40;
         this.clickZone.position.x = this.clickZone.position.x - 5;
         this.clickZone.position.z = this.clickZone.position.z - 5;
@@ -38,8 +43,6 @@ export class MereFleur {
         clickMat.alpha = 0.3;
         this.clickZone.material = clickMat;
 
-
-
         const result = await SceneLoader.ImportMeshAsync("", mamafleur, "", this.scene);
         this.model = result.meshes[0];
         const f = result.meshes[0];
@@ -47,7 +50,7 @@ export class MereFleur {
             mesh.isVisible = true;
         }
         f.scaling = new Vector3(40, 40, 40);
-        f.position = new Vector3(266, 26, 78);
+        f.position = new Vector3(230, 26, 71);
         f.rotation = new Vector3(0, 3 / 4 * Math.PI + Math.PI, 0);
 
         this.animationGroups = result.animationGroups;
@@ -72,11 +75,11 @@ export class MereFleur {
             this.state = name;
             //console.log("Animation:", name);
         } else {
-            console.log("Animation not found:", name);
-            console.log("Available animations:", this.animationGroups ? this.animationGroups.map(ag => ag.name) : "None");
+            console.warn("Animation not found:", name);
+            //console.log("Animation not found:", name);
+            //console.log("Available animations:", this.animationGroups ? this.animationGroups.map(ag => ag.name) : "None");
         }
     }
-
     
     findAnimation(name) {
         if (!this.animationGroups) return null;
@@ -102,44 +105,56 @@ export class MereFleur {
     handleDialog() {
         this.speaking = true
         this.istyping = true
-        //TEXT A CHANGER 
-        let text = this.dialogue[this.numDialogue];
+        this.currentText = this.dialogue[this.numDialogue];
         this.reset = true;
         this.playAnimation("standhappy");
 
-        document.getElementById("dialogue").style.display = 'flex';
-        document.getElementById("dialogue").innerHTML = ''; // Clear previous text
+        document.getElementById("photoHolder").innerHTML = '<img src="'+this.image+'" id="photo">';
 
         //jai copier le code de calvin si ca marche pas c'est pas ma faute
-        document.getElementById("nomPnj").style.display = 'flex'
+        document.getElementById("dialogContainer").style.display = 'flex';
         document.getElementById("nomPnj").innerHTML = this.name
+        document.getElementById("photoHolder").style.display = 'block';
         let i = 0;
         let string = ""
 
         const type = () => {
-            if (i < text.length) {
-                string += text.charAt(i);
-                document.getElementById("dialogue").innerHTML = `${string}${'\u00A0'.repeat(text - i - 1)}`; // Add spaces to fill the rest of the line
+            if (i < this.currentText.length) {
+                string += this.currentText.charAt(i) + this.currentText.charAt(i + 1);
+                document.getElementById("dialogue").innerHTML = `${string}${'\u00A0 '.repeat((this.currentText.length - string.length)/2)}`; // Add spaces to fill the rest of the line
                 //console.log(`${this.currentText.length} - ${document.getElementById("dialogue").innerHTML.length}`);
-                i++
+                i+=2
                 this.typingInterval = setTimeout(type, 5);
             }
         }
         type();
     
     }
+
+    skipTyping() {
+        clearTimeout(this.typingInterval);        
+        document.getElementById("dialogue").innerHTML = this.currentText;             
+        this.istyping = false;
+    }
+
     endDialog(){
         if (!this.istyping || this.currentText === document.getElementById("dialogue").innerHTML) {
             this.speaking = false
             document.getElementById("dialogue").innerHTML = "";
-            document.getElementById("dialogue").style.display = 'none';
-            document.getElementById("nomPnj").style.display = 'none'
-            
-        }else {
-            this.istyping = false;
-        }
+            document.getElementById("dialogContainer").style.display = 'none';
+        }      
+        else this.skipTyping()
     }
+    
     changeNumdialogue(num) {
+        if (num === 2 && this.numDialogue !== 2) {
+            document.getElementById("photoHolder").innerHTML = '<img src="happyFlower.png" id="photo">';
+            this.image = "happyFlower.png";
+        }
+        else if (num === 1 && this.numDialogue !== 1) {
+            document.getElementById("photoHolder").innerHTML = '<img src="angryFlower.png" id="photo">';
+            this.image = "angryFlower.png";
+        }
         this.numDialogue = num;
     }
 

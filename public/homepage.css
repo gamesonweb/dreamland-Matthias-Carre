@@ -116,10 +116,14 @@ a {
   box-sizing: border-box;
   border: 10px solid  rgb(255, 243, 106);
   background-color: rgb(255, 255, 213);
-  display: none;
   margin: 2%;
   border-radius: 50px;
   align-items: center;
+  display: flex
+}
+
+a:hover {
+  cursor: pointer;
 }
 
 #photo {
@@ -140,19 +144,28 @@ a {
   font-family:'Comic Sans MS', 'Comic Sans, cursive';
   padding: 20px;
   height: 50px;
-  display: none;
+  display: flex;
   align-items: center;
 }
 
 #dialogContainer {
   position: absolute;
-  display: flex;
+  display: none;
   flex-direction: row;
   top: 70%;
   left: 5%;
   width: 94.5%;
   height:fit-content;
   max-height: 25%;
+}
+
+#loadingImage {
+  width: 200px;
+  height: 200px;
+  position: relative;
+  top: 4rem;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 #notif {
@@ -200,4 +213,13 @@ a {
     gap: -4px;
     z-index: 1000;
     display: none;
+}
+#hautgauche{
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  display: flex;
+}
+#fin{
+  left: 30px;
 }
