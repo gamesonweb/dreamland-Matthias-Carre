@@ -97,7 +97,8 @@ The musics used in the game are a free Lo-Fi version of original songs made by N
 ## Solutions:
 If you struggle with the water section in the game, here's a solution:
 
-┌┐o┌┘o┌┐
+┌┐o┌┘o┌┐.
+
 │└─┘oo││
 │ooo┌─┘│
 └───┘oo│
