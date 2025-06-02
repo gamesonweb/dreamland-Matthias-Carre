@@ -101,7 +101,7 @@ If you struggle with the water section in the game, here's a solution:
 │└─┘oo││  
 │ooo┌─┘│  
 └───┘oo│  
-o┌o┐oo┌┘  
+o┌─┐oo┌┘  
 o│o└──┘o  
 o│oooooo  
 o└─┐oooo  
