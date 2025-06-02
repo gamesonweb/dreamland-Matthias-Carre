@@ -92,3 +92,16 @@ Every animation, character, or asset that is in the game is an original creation
 The musics used in the game are a free Lo-Fi version of original songs made by NJZ.
 - NewJeans (NJZ) - How Sweet.
 - NewJeans (NJZ) - Bubble Gum.
+
+
+## Solutions:
+If you struggle with the water section in the game, here's a solution:
+
+┌┐o┌┘o┌┐
+│└─┘oo││
+│ooo┌─┘│
+└───┘oo│
+o┌o┐oo┌┘
+o│o└──┘o
+o│oooooo
+o└─┐oooo
